@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kurze Frage</title>
+<meta name="description" content="Nur eine kurze Frage. Dauert zwei Sekunden.">
+<meta property="og:title" content="Kurze Frage…">
+<meta property="og:description" content="Nur eine kurze Frage. Dauert zwei Sekunden.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#ffd23f">
+<style>
+  /* Plakat-Look: Sonnengelb, schwarze fette Schrift, dicke Knöpfe mit hartem Schatten */
+  :root {
+    color-scheme: light;
+    --bg: #ffd23f;
+    --ink: #1b1306;
+    --paper: #fff8e1;
+    --pop: #ff5a36;
+    --font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  main {
+    box-sizing: border-box;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(24px, 5vh, 48px);
+    padding-block: 24px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    text-align: center;
+  }
+  .eyebrow { font-size: 14px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.7; }
+  h1 {
+    margin: 0;
+    max-width: 13ch;
+    font-size: clamp(38px, 9vw, 92px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .buttons { display: flex; gap: 22px; align-items: center; justify-content: center; flex-wrap: wrap; min-height: 130px; }
+  .yes-wrap { transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  button {
+    font: inherit;
+    font-size: clamp(22px, 4.5vw, 32px);
+    font-weight: 900;
+    padding: 0.5em 1.4em;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    box-shadow: 0 6px 0 var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: box-shadow 0.12s, translate 0.12s;
+  }
+  button:active { translate: 0 4px; box-shadow: 0 2px 0 var(--ink); }
+  button:focus-visible { outline: 4px solid var(--paper); outline-offset: 4px; }
+  #yes { background: var(--ink); color: var(--bg); }
+  #no { background: var(--paper); color: var(--ink); }
+  #no.loose {
+    position: fixed;
+    z-index: 5;
+    transition: left 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), top 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), scale 0.25s, box-shadow 0.12s;
+  }
+  #taunt { min-height: 1.4em; font-size: clamp(16px, 3vw, 21px); font-weight: 800; }
+  #taunt b { color: var(--pop); }
+
+  /* Ergebnis-Bildschirm */
+  #done {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    background: var(--ink);
+    color: var(--bg);
+    text-align: center;
+    animation: pop-in 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  #done h2 { margin: 0; font-size: clamp(40px, 10vw, 96px); font-weight: 900; line-height: 1; letter-spacing: -0.02em; text-wrap: balance; }
+  #done p { margin: 0; max-width: 32ch; font-size: clamp(18px, 3.4vw, 24px); font-weight: 700; color: var(--paper); text-wrap: balance; }
+  #done .stat { font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.65; font-variant-numeric: tabular-nums; }
+  #again { background: var(--bg); color: var(--ink); border-color: var(--bg); box-shadow: 0 6px 0 var(--pop); font-size: 20px; }
+  @keyframes pop-in { from { scale: 0.85; opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    #done { animation: none; }
+    #no.loose, .yes-wrap { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow" id="eyebrow">Kurze Frage</div>
+  <h1 id="question">Gehen wir heute Pizza essen?</h1>
+  <div class="buttons">
+    <div class="yes-wrap" id="yesWrap"><button id="yes" type="button">Ja</button></div>
+    <button id="no" type="button">Nein</button>
+  </div>
+  <div id="taunt" aria-live="polite"></div>
+</main>
+
+<section id="done" hidden>
+  <h2 id="doneTitle">Wusste ich’s doch! 🍕</h2>
+  <p id="doneText">Ich hol dich um 19 Uhr ab. Hunger mitbringen.</p>
+  <div class="stat" id="stat"></div>
+  <button id="again" type="button">Nochmal fragen</button>
+</section>
+
+<script>
+/* =========================================================================
+   CONFIG – Frage, Texte und Verhalten hier anpassen.
+   Tipp: Frage und Name gehen auch über den Link:
+     …/kurze-frage/?name=Lena&frage=Kommst du heute mit ins Kino?
+   ========================================================================= */
+const CONFIG = {
+  question: 'Gehen wir heute Pizza essen?',
+  eyebrow: 'Kurze Frage',              // ohne Name
+  eyebrowWithName: 'Kurze Frage, {name}',
+  yesLabel: 'Ja',
+  doneTitle: 'Wusste ich’s doch! 🍕',
+  doneText: 'Ich hol dich um 19 Uhr ab. Hunger mitbringen.',
+  doneTextCustom: 'Super, dann ist das abgemacht. Keine Ausreden mehr!', // wenn die Frage per Link kommt
+  maxEscapes: 10,                      // so oft flieht "Nein", dann gibt es auf
+  // Beschriftung des Nein-Knopfs nach jeder Flucht
+  noLabels: ['Nein', 'Sicher?', 'Wirklich sicher?', 'Überleg nochmal', 'Komm schon', 'Letzte Chance',
+             'Bitte?', 'Ich hab Hunger', 'Du tust mir weh', 'Fast…', 'Na gut… ja.'],
+  // Sprüche unter den Knöpfen
+  taunts: ['', 'Haha, knapp daneben.', 'Der Knopf mag dich nicht.', 'Du bist ganz schön hartnäckig.',
+           'Merkst du, wie <b>Ja</b> immer größer wird?', 'Ich hab Zeit. Sehr viel Zeit.',
+           'Das wird nichts mit Nein.', 'Gib einfach auf.', 'Ernsthaft, drück <b>Ja</b>.',
+           'Der Nein-Knopf ist schon ganz außer Atem.', 'Der Nein-Knopf hat aufgegeben.'],
+  confettiColors: ['#ffd23f', '#ff5a36', '#fff8e1', '#38c172', '#4aa3ff'],
+};
+
+/* ---------- Link-Parameter (?name=…, ?frage=…, oder #Name) ---------------- */
+const params = new URLSearchParams(location.search);
+function cleanName(raw) {
+  return (raw || '').replace(/[_\-.~+]+/g, ' ').replace(/[^\p{L}\s]/gu, '').trim().slice(0, 24);
+}
+function hashName() {
+  try { return cleanName(decodeURIComponent(location.hash.slice(1))); } catch (e) { return ''; }
+}
+const NAME = cleanName(params.get('name')) || hashName();
+const CUSTOM_Q = (params.get('frage') || '').trim().slice(0, 140);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  eyebrow: $('eyebrow'), question: $('question'), yes: $('yes'), yesWrap: $('yesWrap'),
+  no: $('no'), taunt: $('taunt'), done: $('done'), doneTitle: $('doneTitle'),
+  doneText: $('doneText'), stat: $('stat'), again: $('again'),
+};
+
+els.eyebrow.textContent = NAME ? CONFIG.eyebrowWithName.replace('{name}', NAME) : CONFIG.eyebrow;
+els.question.textContent = CUSTOM_Q || CONFIG.question;
+els.yes.textContent = CONFIG.yesLabel;
+document.title = CUSTOM_Q ? 'Kurze Frage' : document.title;
+
+/* ---------- Der fliehende Nein-Knopf -------------------------------------- */
+let escapes = 0, gaveUp = false, lastFlee = 0;
+let pointer = { x: -999, y: -999 };
+let placeholder = null;
+window.addEventListener('pointermove', (e) => { pointer = { x: e.clientX, y: e.clientY }; }, { passive: true });
+
+const rand = (a, b) => a + Math.random() * (b - a);
+function overlaps(a, b, pad) {
+  return a.x < b.right + pad && a.x + a.w > b.left - pad && a.y < b.bottom + pad && a.y + a.h > b.top - pad;
+}
+
+function flee(e) {
+  if (gaveUp) return;
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const now = performance.now();
+  if (now - lastFlee < 180) return;           // pointerdown + click nicht doppelt zählen
+  lastFlee = now;
+  escapes++;
+
+  const no = els.no;
+  if (!no.classList.contains('loose')) {
+    // Platzhalter, damit "Ja" nicht verrutscht, wenn "Nein" sich losreißt
+    const r = no.getBoundingClientRect();
+    placeholder = document.createElement('span');
+    placeholder.style.cssText = `display:inline-block;width:${r.width}px;height:${r.height}px;transition:width .3s`;
+    no.after(placeholder);
+    // … und danach zusammenschrumpfen, damit "Ja" in die Mitte gleitet
+    requestAnimationFrame(() => { placeholder.style.width = '0px'; });
+    setTimeout(() => { if (placeholder) placeholder.style.display = 'none'; }, 320);
+    no.style.left = r.left + 'px';
+    no.style.top = r.top + 'px';
+    no.classList.add('loose');
+    no.offsetWidth; // Reflow, damit die Bewegung animiert
+  }
+
+  no.textContent = CONFIG.noLabels[Math.min(escapes, CONFIG.noLabels.length - 1)];
+  els.taunt.innerHTML = CONFIG.taunts[Math.min(escapes, CONFIG.taunts.length - 1)];
+  const grow = Math.min(1.9, 1 + escapes * 0.09, (innerWidth - 40) / els.yes.offsetWidth);
+  els.yesWrap.style.transform = `scale(${grow})`;
+
+  if (escapes >= CONFIG.maxEscapes) {        // aufgeben: Nein wird zu Ja
+    gaveUp = true;
+    no.style.scale = '1';
+    return;
+  }
+  no.style.scale = String(Math.max(0.45, 1 - escapes * 0.06));
+
+  // Neue Stelle: im Bild, weg vom Finger/Mauszeiger, nicht auf "Ja" oder der Frage
+  const bw = no.offsetWidth, bh = no.offsetHeight, m = 16;
+  const blockers = [els.yes.getBoundingClientRect(), els.question.getBoundingClientRect()];
+  const from = e && e.clientX !== undefined && e.clientX !== 0 ? { x: e.clientX, y: e.clientY } : pointer;
+  let best = null;
+  for (let i = 0; i < 60; i++) {
+    const x = rand(m, Math.max(m, innerWidth - bw - m));
+    const y = rand(m, Math.max(m, innerHeight - bh - m));
+    const box = { x, y, w: bw, h: bh };
+    const far = Math.hypot(x + bw / 2 - from.x, y + bh / 2 - from.y) > 160;
+    if (far && !blockers.some((b) => overlaps(box, b, 14))) { best = box; break; }
+    if (!best && far) best = box;
+  }
+  if (!best) best = { x: m, y: m };
+  no.style.left = best.x + 'px';
+  no.style.top = best.y + 'px';
+}
+
+els.no.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') flee(e); });
+els.no.addEventListener('pointerdown', flee);
+els.no.addEventListener('click', (e) => {
+  if (gaveUp) return sayYes();
+  flee(e);                                     // auch per Tastatur (Enter/Leertaste)
+});
+els.yes.addEventListener('click', sayYes);
+
+/* ---------- Ja! ----------------------------------------------------------- */
+function sayYes() {
+  els.doneTitle.textContent = CONFIG.doneTitle;
+  els.doneText.textContent = CUSTOM_Q ? CONFIG.doneTextCustom : CONFIG.doneText;
+  els.stat.textContent = escapes === 0
+    ? 'Sofort Ja gesagt. Respekt.'
+    : `Fluchtversuche des Nein-Knopfs: ${escapes}`;
+  els.done.hidden = false;
+  els.no.hidden = true;
+  confetti();
+}
+
+els.again.addEventListener('click', () => {
+  escapes = 0;
+  gaveUp = false;
+  els.done.hidden = true;
+  els.no.hidden = false;
+  els.no.classList.remove('loose');
+  els.no.style.cssText = '';
+  els.no.textContent = CONFIG.noLabels[0];
+  els.taunt.textContent = '';
+  els.yesWrap.style.transform = '';
+  if (placeholder) { placeholder.remove(); placeholder = null; }
+});
+
+/* ---------- Konfetti ------------------------------------------------------ */
+function confetti() {
+  if (REDUCED) return;
+  const c = document.createElement('canvas');
+  c.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50';
+  document.body.append(c);
+  const dpr = Math.min(devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+  c.width = W * dpr;
+  c.height = H * dpr;
+  const x = c.getContext('2d');
+  x.scale(dpr, dpr);
+  const cols = CONFIG.confettiColors;
+  const parts = Array.from({ length: 200 }, () => ({
+    x: W / 2 + (Math.random() - 0.5) * W * 0.4, y: H * 0.45,
+    vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 16 - 5,
+    r: 5 + Math.random() * 7, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.3,
+    c: cols[(Math.random() * cols.length) | 0], rect: Math.random() < 0.6,
+  }));
+  const t0 = performance.now();
+  (function tick(now) {
+    x.clearRect(0, 0, W, H);
+    let alive = false;
+    for (const p of parts) {
+      p.vy += 0.38; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      if (p.y < H + 30) alive = true;
+      x.save();
+      x.translate(p.x, p.y);
+      x.rotate(p.rot);
+      x.fillStyle = p.c;
+      if (p.rect) x.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      else { x.beginPath(); x.arc(0, 0, p.r / 2.4, 0, Math.PI * 2); x.fill(); }
+      x.restore();
+    }
+    if (alive && now - t0 < 7000) requestAnimationFrame(tick); else c.remove();
+  })(t0);
+}
+</script>
+</body>
+</html>
